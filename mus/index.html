@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Музыкальная викторина — Определи инструмент по звучанию</title>
+    <style>
+        :root {
+            --bg: #f5ede0;
+            --card-bg: #fffef9;
+            --card-border: #c9a87c;
+            --text: #3e2e1f;
+            --text-light: #5c4430;
+            --accent: #8b5e3c;
+            --accent-hover: #6b3f22;
+            --gold: #b8860b;
+            --gold-light: #d4a853;
+            --success: #4a7c3f;
+            --success-bg: #e6f2e2;
+            --error: #a63c3c;
+            --error-bg: #f9e7e7;
+            --shadow: 0 4px 20px rgba(62, 46, 31, 0.15);
+            --shadow-lg: 0 8px 32px rgba(62, 46, 31, 0.2);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --font-main: 'Georgia', 'Times New Roman', 'Palatino Linotype', serif;
+            --font-ui: 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --grid-color: rgba(160, 120, 80, 0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg);
+            background-image:
+                /* Координатная сетка — стиль карты */
+                repeating-linear-gradient(0deg,
+                    transparent,
+                    transparent 39px,
+                    var(--grid-color) 39px,
+                    var(--grid-color) 40px),
+                repeating-linear-gradient(90deg,
+                    transparent,
+                    transparent 39px,
+                    var(--grid-color) 39px,
+                    var(--grid-color) 40px),
+                /* Лёгкий градиент для эффекта старой бумаги */
+                radial-gradient(ellipse at 30% 20%, rgba(200, 160, 110, 0.25) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(180, 140, 90, 0.2) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 50%, rgba(220, 200, 160, 0.15) 0%, transparent 70%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Основной контейнер */
+        .app-container {
+            width: 100%;
+            max-width: 620px;
+            position: relative;
+        }
+
+        /* Карточка */
+        .card {
+            background: var(--card-bg);
+            border: 2px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 32px 28px 28px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        /* Декоративная двойная рамка — стиль старинной карты */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            right: 8px;
+            bottom: 8px;
+            border: 1px solid rgba(180, 140, 100, 0.35);
+            border-radius: 10px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .card>* {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Декоративный компас в углу */
+        .card::after {
+            content: '🧭';
+            position: absolute;
+            top: 14px;
+            right: 18px;
+            font-size: 28px;
+            opacity: 0.5;
+            pointer-events: none;
+            z-index: 0;
+            transform: rotate(-8deg);
+        }
+
+        /* Заголовки */
+        .card-title {
+            font-family: var(--font-main);
+            font-size: 1.7em;
+            color: #3e2e1f;
+            text-align: center;
+            margin-bottom: 6px;
+            letter-spacing: 0.02em;
+            line-height: 1.25;
+        }
+        .card-subtitle {
+            text-align: center;
+            font-size: 0.95em;
+            color: var(--text-light);
+            margin-bottom: 20px;
+            font-style: italic;
+            letter-spacing: 0.03em;
+        }
+
+        /* Разделитель в стиле карты */
+        .divider {
+            width: 60px;
+            height: 2px;
+            background: var(--gold);
+            margin: 0 auto 18px;
+            border-radius: 1px;
+            opacity: 0.7;
+        }
+        .divider-full {
+            width: 100%;
+            height: 1px;
+            background: rgba(180, 140, 100, 0.3);
+            margin: 16px 0;
+            border: none;
+        }
+
+        /* Инструкция */
+        .instruction {
+            font-family: var(--font-ui);
+            font-size: 0.95em;
+            color: var(--text-light);
+            text-align: center;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            padding: 0 8px;
+        }
+
+        /* Кнопки */
+        .btn {
+            display: inline-block;
+            font-family: var(--font-ui);
+            font-size: 1.05em;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            padding: 14px 36px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            min-width: 140px;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+            outline: none;
+            position: relative;
+        }
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(107, 63, 34, 0.3);
+        }
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 6px 20px rgba(107, 63, 34, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--accent);
+            border: 2px solid var(--accent);
+        }
+        .btn-secondary:hover {
+            background: rgba(139, 94, 60, 0.08);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(74, 124, 63, 0.3);
+        }
+        .btn-success:hover {
+            background: #3d6834;
+            box-shadow: 0 6px 20px rgba(74, 124, 63, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .btn-block {
+            display: block;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Индикатор вопроса */
+        .question-indicator {
+            font-family: var(--font-ui);
+            font-size: 0.85em;
+            color: var(--text-light);
+            text-align: center;
+            margin-bottom: 12px;
+            letter-spacing: 0.04em;
+            font-weight: 600;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        /* Текст вопроса */
+        .question-text {
+            font-family: var(--font-main);
+            font-size: 1.15em;
+            color: var(--text);
+            text-align: center;
+            margin-bottom: 16px;
+            line-height: 1.4;
+            font-weight: 600;
+        }
+
+        /* Аудиоплеер */
+        .audio-wrapper {
+            background: #fdf9f2;
+            border: 1px solid rgba(180, 140, 100, 0.4);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            margin-bottom: 18px;
+            text-align: center;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        .audio-wrapper audio {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 8px;
+            outline: none;
+        }
+        .audio-label {
+            font-family: var(--font-ui);
+            font-size: 0.8em;
+            color: var(--text-light);
+            margin-bottom: 6px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        /* Выпадающий список */
+        .select-wrapper {
+            position: relative;
+            margin-bottom: 18px;
+        }
+        .select-wrapper select {
+            width: 100%;
+            font-family: var(--font-ui);
+            font-size: 1em;
+            padding: 13px 40px 13px 16px;
+            border: 2px solid rgba(180, 140, 100, 0.5);
+            border-radius: 50px;
+            background: #fffef9;
+            color: var(--text);
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            transition: var(--transition);
+            outline: none;
+            letter-spacing: 0.02em;
+        }
+        .select-wrapper select:hover {
+            border-color: var(--accent);
+        }
+        .select-wrapper select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(139, 94, 60, 0.12);
+        }
+        .select-wrapper::after {
+            content: '▾';
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            font-size: 1.1em;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* Сообщение об ошибке (не выбран ответ) */
+        .validation-msg {
+            font-family: var(--font-ui);
+            font-size: 0.9em;
+            color: #c0392b;
+            text-align: center;
+            margin-bottom: 10px;
+            display: none;
+            animation: shake 0.4s ease;
+        }
+        @keyframes shake {
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-6px);
+            }
+            50% {
+                transform: translateX(6px);
+            }
+            75% {
+                transform: translateX(-3px);
+            }
+        }
+
+        /* Блок обратной связи */
+        .feedback {
+            display: none;
+            padding: 16px 18px;
+            border-radius: var(--radius-sm);
+            margin-top: 14px;
+            font-family: var(--font-ui);
+            font-size: 0.93em;
+            line-height: 1.5;
+            letter-spacing: 0.02em;
+            animation: fadeIn 0.35s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .feedback.correct {
+            display: block;
+            background: var(--success-bg);
+            border: 1px solid #c3dbb8;
+            color: #2d5a24;
+        }
+        .feedback.incorrect {
+            display: block;
+            background: var(--error-bg);
+            border: 1px solid #e8c8c8;
+            color: #7a2a2a;
+        }
+        .feedback .fb-icon {
+            font-size: 1.4em;
+            margin-right: 6px;
+            vertical-align: -2px;
+        }
+        .feedback .fb-correct-answer {
+            font-weight: 700;
+            margin-top: 6px;
+        }
+        .feedback .fb-explanation {
+            margin-top: 5px;
+            font-style: italic;
+            opacity: 0.85;
+            font-size: 0.9em;
+        }
+
+        /* Скрытие/показ экранов */
+        .screen {
+            display: none;
+        }
+        .screen.active {
+            display: block;
+        }
+
+        /* Финальный экран */
+        .result-summary {
+            text-align: center;
+        }
+        .result-score {
+            font-size: 3em;
+            font-weight: 700;
+            color: var(--accent);
+            font-family: var(--font-main);
+            letter-spacing: 0.02em;
+        }
+        .result-detail {
+            font-family: var(--font-ui);
+            font-size: 1em;
+            color: var(--text-light);
+            margin: 8px 0 4px;
+        }
+        .result-level {
+            display: inline-block;
+            font-family: var(--font-ui);
+            font-size: 1.1em;
+            font-weight: 700;
+            padding: 8px 20px;
+            border-radius: 50px;
+            margin: 12px 0 8px;
+            letter-spacing: 0.03em;
+        }
+        .level-excellent {
+            background: #d4edda;
+            color: #1e5c2e;
+            border: 1px solid #a3d4ae;
+        }
+        .level-good {
+            background: #d6ecfb;
+            color: #1a4b7a;
+            border: 1px solid #a3cce8;
+        }
+        .level-need-practice {
+            background: #fff3cd;
+            color: #7a5d1a;
+            border: 1px solid #e8d48b;
+        }
+        .level-repeat {
+            background: #fde2e2;
+            color: #7a2a2a;
+            border: 1px solid #e8b8b8;
+        }
+
+        .recommendation {
+            font-family: var(--font-ui);
+            font-size: 0.95em;
+            color: var(--text-light);
+            margin-top: 12px;
+            line-height: 1.5;
+            padding: 0 10px;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 500px) {
+            .card {
+                padding: 22px 16px 20px;
+                border-radius: 12px;
+            }
+            .card::before {
+                top: 5px;
+                left: 5px;
+                right: 5px;
+                bottom: 5px;
+                border-radius: 7px;
+            }
+            .card::after {
+                top: 10px;
+                right: 12px;
+                font-size: 22px;
+            }
+            .card-title {
+                font-size: 1.35em;
+            }
+            .btn {
+                font-size: 0.95em;
+                padding: 12px 24px;
+                min-width: 110px;
+            }
+            .question-text {
+                font-size: 1.05em;
+            }
+            .audio-wrapper audio {
+                max-width: 100%;
+            }
+            .result-score {
+                font-size: 2.4em;
+            }
+        }
+        @media (max-width: 360px) {
+            .card {
+                padding: 16px 10px 14px;
+            }
+            .card-title {
+                font-size: 1.2em;
+            }
+            .btn {
+                font-size: 0.9em;
+                padding: 10px 18px;
+                min-width: 90px;
+            }
+            .select-wrapper select {
+                font-size: 0.9em;
+                padding: 11px 36px 11px 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Карточка -->
+        <div class="card" id="mainCard">
+
+            <!-- ==================== СТАРТОВЫЙ ЭКРАН ==================== -->
+            <div class="screen active" id="startScreen">
+                <div class="card-title">🎵 Музыкальное путешествие</div>
+                <div class="card-subtitle">«Определи инструмент по звучанию»</div>
+                <div class="divider"></div>
+                <div class="instruction">
+                    Сейчас ты услышишь <strong>5 музыкальных фрагментов</strong>.<br>
+                    После каждого прослушивания выбери из списка инструмент,<br>
+                    который, по твоему мнению, звучал в аудио.
+                </div>
+                <div class="instruction" style="font-size:0.85em;opacity:0.75;">
+                    🎧 Внимательно слушай тембр и характер звука.<br>
+                    📋 Выбирай ответ из выпадающего списка.<br>
+                    ✅ После проверки ты увидишь правильный ответ и пояснение.
+                </div>
+                <button class="btn btn-primary btn-block" id="btnStart" style="margin-top:8px;">
+                    🚀 Начать тест
+                </button>
+            </div>
+
+            <!-- ==================== ЭКРАН ВОПРОСА ==================== -->
+            <div class="screen" id="questionScreen">
+                <div class="question-indicator" id="questionIndicator">Вопрос 1 из 5</div>
+                <div class="question-text" id="questionText"></div>
+
+                <!-- Аудиоплеер -->
+                <div class="audio-wrapper">
+                    <div class="audio-label">🔊 Прослушайте аудиофрагмент</div>
+                    <audio id="audioPlayer" controls preload="metadata" playsinline>
+                        Ваш браузер не поддерживает аудиоплеер.
+                    </audio>
+                </div>
+
+                <!-- Выпадающий список -->
+                <div class="select-wrapper">
+                    <select id="answerSelect">
+                        <option value="" disabled selected>— Выбери инструмент —</option>
+                    </select>
+                </div>
+
+                <!-- Сообщение валидации -->
+                <div class="validation-msg" id="validationMsg">⚠️ Пожалуйста, выберите ответ</div>
+
+                <!-- Кнопка проверки -->
+                <button class="btn btn-primary btn-block" id="btnCheck">🔍 Проверить</button>
+
+                <!-- Блок обратной связи -->
+                <div class="feedback" id="feedbackBlock"></div>
+
+                <!-- Кнопка "Следующий вопрос" -->
+                <button class="btn btn-success btn-block" id="btnNext" style="display:none; margin-top:12px;">
+                    ➡️ Следующий вопрос
+                </button>
+            </div>
+
+            <!-- ==================== ФИНАЛЬНЫЙ ЭКРАН ==================== -->
+            <div class="screen" id="resultScreen">
+                <div class="card-title">🏁 Тест завершён!</div>
+                <div class="card-subtitle">Твои результаты</div>
+                <div class="divider"></div>
+                <div class="result-summary">
+                    <div class="result-score" id="resultScore">0 / 5</div>
+                    <div class="result-detail" id="resultPercent">0%</div>
+                    <div id="resultLevelBadge"></div>
+                    <div class="recommendation" id="resultRecommendation"></div>
+                </div>
+                <hr class="divider-full">
+                <button class="btn btn-primary btn-block" id="btnRetry" style="margin-top:6px;">
+                    🔄 Пройти тест заново
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ==================== ДАННЫЕ ТЕСТА ====================
+            /*
+            ⚠️ УЧИТЕЛЮ: Здесь вы можете изменить вопросы, варианты ответов,
+            правильные ответы, объяснения и названия аудиофайлов.
+            Каждый вопрос — объект со следующими полями:
+              - questionText : текст вопроса (строка)
+              - audioFile    : путь к аудиофайлу (строка), например "./audio/audio1.mp3"
+              - options      : массив вариантов ответа (строки)
+              - correctIndex : индекс правильного ответа в массиве options (0-based)
+              - explanation  : краткое пояснение к правильному ответу (строка)
+            */
+            const quizData = [{
+                questionText: 'Какой струнный смычковый инструмент звучит в этом фрагменте?',
+                audioFile: './audio/audio1.mp3',
+                options: ['Скрипка', 'Альт', 'Виолончель', 'Контрабас'],
+                correctIndex: 0,
+                explanation: 'Скрипка обладает высоким, певучим и «полётным» тембром. Альт звучит чуть ниже и гуще, виолончель — ещё ниже и бархатистее, а контрабас — самый низкий и глухой из семейства.'
+            }, {
+                questionText: 'Определите деревянный духовой инструмент по звучанию.',
+                audioFile: './audio/audio2.mp3',
+                options: ['Кларнет', 'Флейта', 'Гобой', 'Фагот'],
+                correctIndex: 1,
+                explanation: 'Флейта отличается светлым, воздушным, «свистящим» тембром, особенно в высоком регистре. Кларнет звучит мягче и «деревяннее», гобой — с характерным носовым оттенком, фагот — низкий и немного гнусавый.'
+            }, {
+                questionText: 'Какой русский народный щипковый инструмент вы услышали?',
+                audioFile: './audio/audio3.mp3',
+                options: ['Домра', 'Балалайка', 'Гусли', 'Мандолина'],
+                correctIndex: 1,
+                explanation: 'Балалайка имеет узнаваемый звенящий, слегка «дребезжащий» тембр с быстрым затуханием звука. Домра звучит мягче и округлее, гусли — переливчато и «арфообразно», мандолина — с металлическим отзвуком (итальянский инструмент).'
+            }, {
+                questionText: 'Определите медный духовой инструмент по этому фрагменту.',
+                audioFile: './audio/audio4.mp3',
+                options: ['Тромбон', 'Труба', 'Валторна', 'Туба'],
+                correctIndex: 1,
+                explanation: 'Труба обладает ярким, пронзительным, «фанфарным» тембром. Тромбон звучит более мощно и «размашисто», валторна — мягче и благороднее, туба — очень низко и фундаментально.'
+            }, {
+                questionText: 'Какой клавишный инструмент исполняет этот фрагмент?',
+                audioFile: './audio/audio5.mp3',
+                options: ['Клавесин', 'Орган', 'Фортепиано', 'Челеста'],
+                correctIndex: 2,
+                explanation: 'Фортепиано отличается мягким, глубоким тембром с богатыми динамическими оттенками (от пиано до форте). Клавесин звучит острее и «щипково», орган — мощно и протяжно, челеста — нежно и «колокольчато».'
+            }];
+
+            const totalQuestions = quizData.length;
+            const maxScore = totalQuestions;
+
+            // ==================== СОСТОЯНИЕ ТЕСТА ====================
+            let currentQuestionIndex = 0;
+            let score = 0;
+            let answered = false; // был ли дан ответ на текущий вопрос
+
+            // ==================== DOM-ЭЛЕМЕНТЫ ====================
+            const startScreen = document.getElementById('startScreen');
+            const questionScreen = document.getElementById('questionScreen');
+            const resultScreen = document.getElementById('resultScreen');
+
+            const questionIndicator = document.getElementById('questionIndicator');
+            const questionText = document.getElementById('questionText');
+            const audioPlayer = document.getElementById('audioPlayer');
+            const answerSelect = document.getElementById('answerSelect');
+            const validationMsg = document.getElementById('validationMsg');
+            const feedbackBlock = document.getElementById('feedbackBlock');
+            const btnCheck = document.getElementById('btnCheck');
+            const btnNext = document.getElementById('btnNext');
+            const btnStart = document.getElementById('btnStart');
+            const btnRetry = document.getElementById('btnRetry');
+
+            const resultScore = document.getElementById('resultScore');
+            const resultPercent = document.getElementById('resultPercent');
+            const resultLevelBadge = document.getElementById('resultLevelBadge');
+            const resultRecommendation = document.getElementById('resultRecommendation');
+
+            // ==================== ФУНКЦИИ НАВИГАЦИИ ====================
+            function showScreen(screen) {
+                // Скрываем все экраны
+                [startScreen, questionScreen, resultScreen].forEach(s => s.classList.remove(
+                'active'));
+                // Показываем нужный
+                screen.classList.add('active');
+            }
+
+            // ==================== ЗАГРУЗКА ВОПРОСА ====================
+            function loadQuestion(index) {
+                answered = false;
+                const data = quizData[index];
+
+                // Обновляем индикатор
+                questionIndicator.textContent = `Вопрос ${index + 1} из ${totalQuestions}`;
+
+                // Обновляем текст вопроса
+                questionText.textContent = data.questionText;
+
+                // Обновляем аудиофайл
+                // Важно: файл должен лежать в папке audio рядом с index.html.
+                // Например: audio/audio1.mp3
+                audioPlayer.pause();
+                audioPlayer.currentTime = 0;
+                audioPlayer.src = data.audioFile + '?v=2';
+                audioPlayer.load(); // перезагружаем аудиоплеер
+
+                // Обновляем варианты ответа
+                answerSelect.innerHTML = '<option value="" disabled selected>— Выбери инструмент —</option>';
+                data.options.forEach((optionText, optIndex) => {
+                    const option = document.createElement('option');
+                    option.value = optIndex;
+                    option.textContent = optionText;
+                    answerSelect.appendChild(option);
+                });
+                // Сбрасываем выбор
+                answerSelect.value = '';
+
+                // Скрываем обратную связь и сообщение валидации
+                feedbackBlock.style.display = 'none';
+                feedbackBlock.className = 'feedback';
+                feedbackBlock.innerHTML = '';
+                validationMsg.style.display = 'none';
+
+                // Показываем кнопку «Проверить», скрываем «Следующий»
+                btnCheck.style.display = 'block';
+                btnNext.style.display = 'none';
+
+                // Разблокируем select
+                answerSelect.disabled = false;
+            }
+
+            // ==================== ПРОВЕРКА ОТВЕТА ====================
+            function checkAnswer() {
+                // Если уже ответили — не даём повторно проверить
+                if (answered) return;
+
+                const selectedValue = answerSelect.value;
+
+                // Валидация: если ничего не выбрано
+                if (selectedValue === '' || selectedValue === null) {
+                    validationMsg.style.display = 'block';
+                    // Трясём карточку
+                    const card = document.getElementById('mainCard');
+                    card.style.animation = 'shake 0.4s ease';
+                    setTimeout(() => { card.style.animation = ''; }, 400);
+                    return;
+                }
+                validationMsg.style.display = 'none';
+
+                const selectedIndex = parseInt(selectedValue, 10);
+                const data = quizData[currentQuestionIndex];
+                const isCorrect = (selectedIndex === data.correctIndex);
+
+                // Блокируем select
+                answerSelect.disabled = true;
+                answered = true;
+
+                // Начисляем балл
+                if (isCorrect) {
+                    score++;
+                }
+
+                // Формируем обратную связь
+                let fbHTML = '';
+                if (isCorrect) {
+                    fbHTML += '<span class="fb-icon">✅</span> <strong>Верно!</strong> ';
+                    fbHTML += 'Вы правильно определили инструмент.';
+                    feedbackBlock.className = 'feedback correct';
+                } else {
+                    fbHTML += '<span class="fb-icon">❌</span> <strong>Неверно.</strong> ';
+                    fbHTML += 'Вы выбрали другой вариант.';
+                    feedbackBlock.className = 'feedback incorrect';
+                }
+                fbHTML +=
+                    `<div class="fb-correct-answer">🎯 Правильный ответ: <em>${data.options[data.correctIndex]}</em></div>`;
+                fbHTML += `<div class="fb-explanation">📝 ${data.explanation}</div>`;
+
+                feedbackBlock.innerHTML = fbHTML;
+                feedbackBlock.style.display = 'block';
+
+                // Меняем кнопки
+                btnCheck.style.display = 'none';
+                if (currentQuestionIndex < totalQuestions - 1) {
+                    btnNext.textContent = '➡️ Следующий вопрос';
+                } else {
+                    btnNext.textContent = '🏁 Завершить тест';
+                }
+                btnNext.style.display = 'block';
+
+                // Прокручиваем карточку, чтобы был виден фидбек (для мобильных)
+                feedbackBlock.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            function goToNextQuestion() {
+                if (!answered) return; // на всякий случай
+
+                currentQuestionIndex++;
+                if (currentQuestionIndex < totalQuestions) {
+                    loadQuestion(currentQuestionIndex);
+                    // Прокручиваем карточку наверх
+                    document.getElementById('mainCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    showResults();
+                }
+            }
+
+            // ==================== ФИНАЛЬНЫЙ ЭКРАН ====================
+            function showResults() {
+                const percent = Math.round((score / maxScore) * 100);
+
+                resultScore.textContent = `${score} / ${maxScore}`;
+                resultPercent.textContent = `${percent}%`;
+
+                // Уровень и рекомендация
+                let levelClass, levelText, recommendation;
+                if (percent >= 90) {
+                    levelClass = 'level-excellent';
+                    levelText = '🏆 Отличный результат!';
+                    recommendation =
+                        'Вы прекрасно различаете тембры музыкальных инструментов. Продолжайте развивать свой слух — попробуйте определять инструменты в оркестровых произведениях целиком.';
+                } else if (percent >= 70) {
+                    levelClass = 'level-good';
+                    levelText = '👍 Хороший результат!';
+                    recommendation =
+                        'Вы неплохо ориентируетесь в тембрах. Рекомендуем ещё раз послушать записи инструментов, которые вызвали затруднение, и обратить внимание на характерные особенности их звучания.';
+                } else if (percent >= 50) {
+                    levelClass = 'level-need-practice';
+                    levelText = '📚 Нужно потренироваться ещё';
+                    recommendation =
+                        'Некоторые тембры пока вызывают трудности. Советуем прослушать отдельные записи инструментов симфонического оркестра и народных инструментов, сравнивая их попарно.';
+                } else {
+                    levelClass = 'level-repeat';
+                    levelText = '🔄 Рекомендуется повторить тему';
+                    recommendation =
+                        'Тема пока усвоена слабо. Вернитесь к изучению тембров музыкальных инструментов, послушайте аудиопримеры каждого инструмента по отдельности и пройдите тест повторно.';
+                }
+
+                resultLevelBadge.innerHTML =
+                    `<span class="result-level ${levelClass}">${levelText}</span>`;
+                resultRecommendation.textContent = recommendation;
+
+                showScreen(resultScreen);
+                document.getElementById('mainCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            function resetTest() {
+                currentQuestionIndex = 0;
+                score = 0;
+                answered = false;
+                loadQuestion(0);
+                showScreen(questionScreen);
+                document.getElementById('mainCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            // ==================== ОБРАБОТЧИКИ СОБЫТИЙ ====================
+            btnStart.addEventListener('click', function() {
+                resetTest();
+            });
+
+            btnCheck.addEventListener('click', checkAnswer);
+
+            btnNext.addEventListener('click', goToNextQuestion);
+
+            btnRetry.addEventListener('click', function() {
+                resetTest();
+            });
+
+            // ==================== ГОРЯЧИЕ КЛАВИШИ (для удобства) ====================
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    const activeScreen = document.querySelector('.screen.active');
+                    if (activeScreen === questionScreen) {
+                        if (!answered && btnCheck.style.display !== 'none') {
+                            e.preventDefault();
+                            checkAnswer();
+                        } else if (answered && btnNext.style.display !== 'none') {
+                            e.preventDefault();
+                            goToNextQuestion();
+                        }
+                    } else if (activeScreen === startScreen) {
+                        e.preventDefault();
+                        resetTest();
+                    } else if (activeScreen === resultScreen) {
+                        e.preventDefault();
+                        resetTest();
+                    }
+                }
+                // Цифры 1-4 для быстрого выбора варианта (опционально)
+                if (!answered && document.querySelector('.screen.active') === questionScreen) {
+                    const keyNum = parseInt(e.key);
+                    if (keyNum >= 1 && keyNum <= quizData[currentQuestionIndex].options.length) {
+                        e.preventDefault();
+                        answerSelect.value = keyNum - 1;
+                        validationMsg.style.display = 'none';
+                    }
+                }
+            });
+
+            // Проверка загрузки аудио: если файл не найден или формат не поддерживается,
+            // информация появится в консоли браузера. На странице ничего лишнего не показываем.
+            audioPlayer.addEventListener('error', function() {
+                const data = quizData[currentQuestionIndex];
+                console.warn('Аудио не загрузилось. Проверьте путь и название файла:', data ? data.audioFile : '');
+            });
+
+            // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+            // Предзагружаем первый вопрос (на случай, если понадобится)
+            loadQuestion(0);
+            // Но показываем стартовый экран
+            showScreen(startScreen);
+        })();
+    </script>
+</body>
+</html>
